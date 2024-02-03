@@ -1,0 +1,155 @@
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+#include <Update.h>
+#include <PubSubClient.h>
+
+#include <FastLED.h>
+
+const char* host = "esp32";
+const char* ssid = "AhoyThereCastaways";
+const char* password = "97755056664745005086";
+
+const char* mqtt_server = "192.168.178.43";
+
+#include "web.h"
+#include "ClimateDisplay.h"
+
+#define LED_PIN     2
+#define NUM_LEDS    6
+WebServer server(80);
+CRGB leds[NUM_LEDS];
+ClimateDisplay climateDisplay(leds);
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+long lastMsg = 0;
+char msg[50];
+int value = 0;
+
+void callback(char* topic, byte* payload, unsigned int length) {
+    Serial.print("Message arrived [");
+    Serial.print(topic);
+    Serial.print("] ");
+    for (int i = 0; i < length; i++) {
+        Serial.print((char)payload[i]);
+    }
+    Serial.println();
+
+    if(std::string(topic) == "climatedisplay/kitchen/humidity") {
+        float humidity = atof((char*)payload);
+        climateDisplay.setRoomHumidity(Room::Kitchen, atof((char*)payload));
+        Serial.println(humidity);
+    }
+}
+
+void reconnect() {
+    // Loop until we're reconnected
+    while (!client.connected()) {
+        Serial.print("Attempting MQTT connection...");
+        // Attempt to connect
+        if (client.connect("ESP32Client", "mosquitto", "mosquitto")) {
+            Serial.println("connected");
+
+            client.subscribe("climatedisplay/kitchen/humidity");
+            client.subscribe("climatedisplay/kitchen/temperature");
+        } else {
+            Serial.print("failed, rc=");
+            Serial.print(client.state());
+            Serial.println(" try again in 5 seconds");
+            // Wait 5 seconds before retrying
+            delay(5000);
+        }
+    }
+}
+
+/*
+ * setup function
+ */
+void setup(void) {
+   pinMode(2, OUTPUT);
+   FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
+
+  Serial.begin(115200);
+
+  // Connect to WiFi network
+  WiFi.begin(ssid, password);
+  Serial.println("");
+
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  // MQTT Setup
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+
+  /*use mdns for host name resolution*/
+  if (!MDNS.begin(host)) { //http://esp32.local
+    Serial.println("Error setting up MDNS responder!");
+    while (1) {
+      delay(1000);
+    }
+  }
+  Serial.println("mDNS responder started");
+  /*return index page which is stored in serverIndex */
+  server.on("/", HTTP_GET, []() {
+    server.sendHeader("Connection", "close");
+    server.send(200, "text/html", loginIndex);
+  });
+  server.on("/serverIndex", HTTP_GET, []() {
+    server.sendHeader("Connection", "close");
+    server.send(200, "text/html", serverIndex);
+  });
+  /*handling uploading firmware file */
+  server.on("/update", HTTP_POST, []() {
+    server.sendHeader("Connection", "close");
+    server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
+    ESP.restart();
+  }, []() {
+    HTTPUpload& upload = server.upload();
+    if (upload.status == UPLOAD_FILE_START) {
+      Serial.printf("Update: %s\n", upload.filename.c_str());
+      if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
+        Update.printError(Serial);
+      }
+    } else if (upload.status == UPLOAD_FILE_WRITE) {
+      /* flashing firmware to ESP*/
+      if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+        Update.printError(Serial);
+      }
+    } else if (upload.status == UPLOAD_FILE_END) {
+      if (Update.end(true)) { //true to set the size to the current progress
+        Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+      } else {
+        Update.printError(Serial);
+      }
+    }
+  });
+  server.begin();
+
+  // Setup Climate Display
+
+  climateDisplay.setRoomHumidity(Room::Kitchen, 50);
+
+}
+
+void loop(void) {
+  server.handleClient();
+  delay(1);
+
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  climateDisplay.displayHumidityOnLEDs();
+}
