@@ -4,6 +4,11 @@
 #include <ESPmDNS.h>
 #include <Update.h>
 #include <PubSubClient.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
+
 
 #include <FastLED.h>
 
@@ -18,6 +23,13 @@ const char* mqtt_server = "192.168.178.43";
 
 #define LED_PIN 2
 #define NUM_LEDS 6
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+#define SCREEN_ADDRESS 0x3C
+
+Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 WebServer server(80);
 CRGB leds[NUM_LEDS];
@@ -165,8 +177,28 @@ void setup(void) {
   server.begin();
 
   // Setup Climate Display
-
   climateDisplay.setRoomHumidity(Room::Kitchen, 50);
+
+  // Setup OLED
+  Wire.begin(22,19);
+  if(!display.begin(0x3C, true)) {
+    Serial.println(F("SSD1306, allocation failed"));
+    for(;;);
+  }
+
+  display.display();
+  delay(2000);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SH110X_WHITE);
+  display.setCursor(0,0);
+  display.cp437(true);
+  for(int16_t i = 0; i < 256; i++) {
+    if(i == '\n') display.write(' ');
+    else display.write(i);
+    display.display();
+    delay(500);
+  }
 
 }
 

@@ -159,6 +159,10 @@ class ClimateDisplay {
             }
         };
 
+        void drawScreen() {
+            
+        };
+
         void updateLEDs() {
             for (auto room : rooms) {
                 if (room.second.humidity >= humiditiyCriticalThreshold) {
