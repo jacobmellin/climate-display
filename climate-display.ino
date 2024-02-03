@@ -16,8 +16,9 @@ const char* mqtt_server = "192.168.178.43";
 #include "web.h"
 #include "ClimateDisplay.h"
 
-#define LED_PIN     2
-#define NUM_LEDS    6
+#define LED_PIN 2
+#define NUM_LEDS 6
+
 WebServer server(80);
 CRGB leds[NUM_LEDS];
 ClimateDisplay climateDisplay(leds);
@@ -37,10 +38,31 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
     Serial.println();
 
+    // TODO: Do a better job of parsing this
     if(std::string(topic) == "climatedisplay/kitchen/humidity") {
         float humidity = atof((char*)payload);
         climateDisplay.setRoomHumidity(Room::Kitchen, atof((char*)payload));
-        Serial.println(humidity);
+    } else if(std::string(topic) == "climatedisplay/kitchen/temperature") {
+        float temperature = atof((char*)payload);
+        climateDisplay.setRoomTemperature(Room::Kitchen, atof((char*)payload));
+    } else if(std::string(topic) == "climatedisplay/bathroom/humidity") {
+        float humidity = atof((char*)payload);
+        climateDisplay.setRoomHumidity(Room::Bathroom, atof((char*)payload));
+    } else if(std::string(topic) == "climatedisplay/bathroom/temperature") {
+        float temperature = atof((char*)payload);
+        climateDisplay.setRoomTemperature(Room::Bathroom, atof((char*)payload));
+    } else if(std::string(topic) == "climatedisplay/bedroom/humidity") {
+        float humidity = atof((char*)payload);
+        climateDisplay.setRoomHumidity(Room::Bedroom, atof((char*)payload));
+    } else if(std::string(topic) == "climatedisplay/bedroom/temperature") {
+        float temperature = atof((char*)payload);
+        climateDisplay.setRoomTemperature(Room::Bedroom, atof((char*)payload));
+    } else if(std::string(topic) == "climatedisplay/corridor/humidity") {
+        float humidity = atof((char*)payload);
+        climateDisplay.setRoomHumidity(Room::Corridor, atof((char*)payload));
+    } else if(std::string(topic) == "climatedisplay/corridor/temperature") {
+        float temperature = atof((char*)payload);
+        climateDisplay.setRoomTemperature(Room::Corridor, atof((char*)payload));
     }
 }
 
@@ -54,6 +76,12 @@ void reconnect() {
 
             client.subscribe("climatedisplay/kitchen/humidity");
             client.subscribe("climatedisplay/kitchen/temperature");
+            client.subscribe("climatedisplay/bedroom/humidity");
+            client.subscribe("climatedisplay/bedroom/temperature");
+            client.subscribe("climatedisplay/bathroom/humidity");
+            client.subscribe("climatedisplay/bathroom/temperature");
+            client.subscribe("climatedisplay/corridor/humidity");
+            client.subscribe("climatedisplay/corridor/temperature");
         } else {
             Serial.print("failed, rc=");
             Serial.print(client.state());
@@ -150,6 +178,5 @@ void loop(void) {
     reconnect();
   }
   client.loop();
-
-  climateDisplay.displayHumidityOnLEDs();
+  climateDisplay.loop();
 }
