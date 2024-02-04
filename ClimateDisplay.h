@@ -1,5 +1,10 @@
 #include <map>
 #include <FastLED.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
+#include <string>
+#include <iomanip>
+#include <sstream>
 
 #define LED_FADE_DURATION_MS 1000
 
@@ -25,6 +30,7 @@ class ClimateDisplay {
     private:
         struct RoomData {
             Room room;
+            const char* name;
             float temperature;
             float humidity;
             bool windowOpen;
@@ -45,9 +51,15 @@ class ClimateDisplay {
         std::map<LED, LEDData> displayLEDs;
 
         CRGB* leds;
+        Adafruit_SH1106G* display;
         bool isStandby = false;
         float humidityWarningThreshold = 53;
         float humiditiyCriticalThreshold = 57;
+
+        void replaceSpecialChars(const char* text) {
+            for (int i = 0; i < sizeof(text); i++) {
+            }
+        }
 
         void handleLEDFade() {
             for(auto& led : displayLEDs) {
@@ -70,8 +82,9 @@ class ClimateDisplay {
         }
 
     public:
-        ClimateDisplay(CRGB* leds) {
+        ClimateDisplay(CRGB* leds, Adafruit_SH1106G* display) {
             this->leds = leds;
+            this->display = display;
 
             displayLEDs[LED::Kitchen] = LEDData();
             displayLEDs[LED::Kitchen].ledIndex = 0;
@@ -97,30 +110,38 @@ class ClimateDisplay {
             displayLEDs[LED::Humidity].ledIndex = 5;
             displayLEDs[LED::Humidity].color = CRGB::Black;
 
+            rooms[Room::Kitchen] = RoomData();
             rooms[Room::Kitchen].room = Room::Kitchen;
             rooms[Room::Kitchen].led = LED::Kitchen;
+            rooms[Room::Kitchen].name = "K\201che";
 
             rooms[Room::Bathroom] = RoomData();
             rooms[Room::Bathroom].room = Room::Bathroom;
             rooms[Room::Bathroom].led = LED::Bathroom;
+            rooms[Room::Bathroom].name = "Bad";
 
             rooms[Room::Bedroom] = RoomData();
             rooms[Room::Bedroom].room = Room::Bedroom;
             rooms[Room::Bedroom].led = LED::Bedroom;
+            rooms[Room::Bedroom].name = "Zimmer r.";
 
             rooms[Room::Corridor] = RoomData(); 
             rooms[Room::Corridor].room = Room::Corridor;
             rooms[Room::Corridor].led = LED::Corridor;
+            rooms[Room::Corridor].name = "Flur";
         };
 
 
         void setRoomTemperature(Room room, float temperature) {
             rooms[room].temperature = temperature;
+            updateLEDs();
+            drawScreen();
         };
 
         void setRoomHumidity(Room room, float humidity) {
             rooms[room].humidity = humidity;
             updateLEDs();
+            drawScreen();
         };
 
         void setRoomWindowOpen(Room room, bool open) {
@@ -160,7 +181,45 @@ class ClimateDisplay {
         };
 
         void drawScreen() {
-            
+          display->clearDisplay();
+          display->setTextSize(1);
+          display->setTextColor(SH110X_WHITE);
+          display->setCursor(0,1);
+          display->cp437(true);
+
+          bool first = true;
+
+          for (auto room : rooms) {
+            if(first) {
+                first = false;
+            } else {
+                display->print("\n");
+            }
+
+            std::stringstream label;
+            label << std::left << std::setw(10) << room.second.name;
+            display->print(label.str().c_str());
+
+            display->print("  ");
+
+            std::stringstream humidity;
+            humidity << std::right << std::fixed << std::setw(5) << std::setprecision(1) << room.second.humidity;
+            display->print(humidity.str().c_str());
+            display->print(" %RH");
+
+            display->print("\n            ");
+
+
+            std::stringstream temperature;
+            temperature << std::fixed << std::setw(5) << std::setprecision(1) << room.second.temperature;
+            display->print(temperature.str().c_str());
+
+            display->print("  ");
+            display->write(248);
+            display->print("C");
+          }
+
+          display->display();
         };
 
         void updateLEDs() {

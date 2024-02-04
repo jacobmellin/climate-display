@@ -23,6 +23,11 @@ const char* mqtt_server = "192.168.178.43";
 
 #define LED_PIN 2
 #define NUM_LEDS 6
+#define ROTARY_PIN_B 17
+#define BUTTON_PIN 18
+#define ROTARY_PIN_A 16
+#define US_SENSOR_PIN_ECHO 15
+#define US_SENSOR_PIN_TRIG 13
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -33,7 +38,7 @@ Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 WebServer server(80);
 CRGB leds[NUM_LEDS];
-ClimateDisplay climateDisplay(leds);
+ClimateDisplay climateDisplay(leds, &display);
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -176,39 +181,36 @@ void setup(void) {
   });
   server.begin();
 
-  // Setup Climate Display
-  climateDisplay.setRoomHumidity(Room::Kitchen, 50);
 
   // Setup OLED
   Wire.begin(22,19);
   if(!display.begin(0x3C, true)) {
-    Serial.println(F("SSD1306, allocation failed"));
+    Serial.println(F("SH1106: allocation failed"));
     for(;;);
   }
 
-  display.display();
-  delay(2000);
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SH110X_WHITE);
-  display.setCursor(0,0);
-  display.cp437(true);
-  for(int16_t i = 0; i < 256; i++) {
-    if(i == '\n') display.write(' ');
-    else display.write(i);
-    display.display();
-    delay(500);
-  }
+  // Setup Button
+  pinMode(BUTTON_PIN, INPUT);
+
+  // Setup Climate Display
+  climateDisplay.setRoomHumidity(Room::Kitchen, 50);
 
 }
 
 void loop(void) {
   server.handleClient();
-  delay(1);
 
   if (!client.connected()) {
     reconnect();
   }
+
   client.loop();
   climateDisplay.loop();
+
+  auto buttonState = digitalRead(BUTTON_PIN);
+  if(buttonState == HIGH) {
+    climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::White);
+  } else {
+    climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::Black);
+  }
 }
