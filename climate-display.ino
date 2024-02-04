@@ -8,6 +8,8 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
+#include <InputDebounce.h>
+#include <NewEncoder.h>
 
 
 #include <FastLED.h>
@@ -23,9 +25,9 @@ const char* mqtt_server = "192.168.178.43";
 
 #define LED_PIN 2
 #define NUM_LEDS 6
+#define ROTARY_PIN_A 16
 #define ROTARY_PIN_B 17
 #define BUTTON_PIN 18
-#define ROTARY_PIN_A 16
 #define US_SENSOR_PIN_ECHO 15
 #define US_SENSOR_PIN_TRIG 13
 
@@ -34,11 +36,16 @@ const char* mqtt_server = "192.168.178.43";
 #define OLED_RESET -1
 #define SCREEN_ADDRESS 0x3C
 
+#define BUTTON_DEBOUNCE_DELAY 20
+
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 WebServer server(80);
 CRGB leds[NUM_LEDS];
 ClimateDisplay climateDisplay(leds, &display);
+
+NewEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, -20, 20, 0, 1);
+int16_t prevEncoderValue;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -107,6 +114,10 @@ void reconnect() {
             delay(5000);
         }
     }
+}
+
+void knobCallback(long value) {
+    Serial.printf("Value: %i\n", value);
 }
 
 /*
@@ -195,6 +206,10 @@ void setup(void) {
   // Setup Climate Display
   climateDisplay.setRoomHumidity(Room::Kitchen, 50);
 
+  // Setup rotary encoder
+  pinMode(ROTARY_PIN_A, INPUT_PULLUP);
+  pinMode(ROTARY_PIN_B, INPUT_PULLUP);
+  encoder.begin();
 }
 
 void loop(void) {
@@ -212,5 +227,24 @@ void loop(void) {
     climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::White);
   } else {
     climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::Black);
+  }
+
+  int16_t currentValue;
+
+  NewEncoder::EncoderState currentEncoderState;
+
+  if(encoder.getState(currentEncoderState)) {
+    Serial.println("Encoder: ");
+    currentValue = currentEncoderState.currentValue;
+
+    // Handle big jumps
+    if(currentValue > (prevEncoderValue + 1)) {
+        currentValue = prevEncoderValue + 1;
+    } else if(currentValue < (prevEncoderValue - 1)) {
+        currentValue = prevEncoderValue - 1;
+    }
+
+    prevEncoderValue = currentValue;
+    Serial.println(currentValue);
   }
 }
