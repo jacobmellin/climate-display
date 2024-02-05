@@ -10,7 +10,8 @@
 #include <Adafruit_SH110X.h>
 #include <InputDebounce.h>
 #include <NewEncoder.h>
-
+#include <HCSR04.h>
+#include <arduino-timer.h>
 
 #include <FastLED.h>
 
@@ -38,6 +39,8 @@ const char* mqtt_server = "192.168.178.43";
 
 #define BUTTON_DEBOUNCE_DELAY 50
 
+auto timer = timer_create_default();
+
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 WebServer server(80);
@@ -48,6 +51,9 @@ NewEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, -20, 20, 0, 1);
 int16_t prevEncoderValue;
 
 static InputDebounce button1;
+
+HCSR04 hc(US_SENSOR_PIN_TRIG, US_SENSOR_PIN_ECHO);
+float hcCurrentDist;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -192,7 +198,18 @@ void setup(void) {
       }
     }
   });
+
   server.begin();
+
+  // MQTT and Web Timers
+  timer.every(1, [](void *arg) -> bool {
+    server.handleClient();
+    if (!client.connected()) {
+      reconnect();
+    }
+    client.loop();
+    return true;
+  });
 
 
   // Setup OLED
@@ -209,6 +226,11 @@ void setup(void) {
     climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::White);
   });
   button1.setup(BUTTON1_PIN, BUTTON_DEBOUNCE_DELAY, InputDebounce::PIM_INT_PULL_UP_RES);
+  timer.every(3, [](void *arg) -> bool {
+      unsigned long currentMillis = millis();
+      button1.process(currentMillis);
+      return true;
+  });
 
   // Setup Climate Display
   climateDisplay.setRoomHumidity(Room::Kitchen, 50);
@@ -217,37 +239,37 @@ void setup(void) {
   pinMode(ROTARY_PIN_A, INPUT_PULLUP);
   pinMode(ROTARY_PIN_B, INPUT_PULLUP);
   encoder.begin();
+  timer.every(10, [](void *arg) -> bool {
+    int16_t currentValue;
+    NewEncoder::EncoderState currentEncoderState;
+
+      if(encoder.getState(currentEncoderState)) {
+        Serial.println("Encoder: ");
+        currentValue = currentEncoderState.currentValue;
+
+        // Handle big jumps
+        if(currentValue > (prevEncoderValue + 1)) {
+            currentValue = prevEncoderValue + 1;
+        } else if(currentValue < (prevEncoderValue - 1)) {
+            currentValue = prevEncoderValue - 1;
+        }
+
+        prevEncoderValue = currentValue;
+        Serial.println(currentValue);
+      }     
+      return true;
+    });
+
+    // Ultrasonic Distance Sensor
+    timer.every(1000, [](void *arg) -> bool {
+      Serial.println(hc.dist());
+      return true;
+    });
+
 }
 
 void loop(void) {
   delay(1);
-  unsigned long currentMillis = millis();
-  button1.process(currentMillis);
-
-  server.handleClient();
-
-  if (!client.connected()) {
-    reconnect();
-  }
-
-  client.loop();
   climateDisplay.loop();
-
-  int16_t currentValue;
-  NewEncoder::EncoderState currentEncoderState;
-
-  if(encoder.getState(currentEncoderState)) {
-    Serial.println("Encoder: ");
-    currentValue = currentEncoderState.currentValue;
-
-    // Handle big jumps
-    if(currentValue > (prevEncoderValue + 1)) {
-        currentValue = prevEncoderValue + 1;
-    } else if(currentValue < (prevEncoderValue - 1)) {
-        currentValue = prevEncoderValue - 1;
-    }
-
-    prevEncoderValue = currentValue;
-    Serial.println(currentValue);
-  }
+  timer.tick();
 }
