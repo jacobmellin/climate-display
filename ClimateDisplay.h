@@ -160,6 +160,7 @@ class ClimateDisplay {
                startWakeTime = millis();
             }
             updateLEDs();
+            drawScreen();
         };
 
         void setHumidityWarningThreshold(float threshold) {
@@ -199,6 +200,12 @@ class ClimateDisplay {
 
         void drawScreen() {
           display->clearDisplay();
+
+          if(isStandby) {
+            display->display();
+            return;
+          }
+
           display->setTextSize(1);
           display->setTextColor(SH110X_WHITE);
           display->setCursor(0,1);
