@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="120mm"
+   height="54mm"
+   viewBox="0 0 120 54"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="ClimateDisplayLayout.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <style
+     id="style3">.dashed { stroke-dasharray:0.264999, 0794999;    opacity:0.2;    storke:#000; }
+.solid { opacity:.2; }
+</style>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#d1d1d1"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="true"
+     inkscape:zoom="4.5858771"
+     inkscape:cx="179.68209"
+     inkscape:cy="134.10739"
+     inkscape:window-width="3756"
+     inkscape:window-height="2048"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       id="grid2"
+       units="mm"
+       originx="8"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#3f3fff"
+       empopacity="0.1254902"
+       color="#3f3fff"
+       opacity="0.0588235"
+       empspacing="4"
+       dotted="true"
+       gridanglex="30"
+       gridanglez="30"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="stroke-width:0.999998"
+       id="rect3"
+       width="120"
+       height="54"
+       x="0"
+       y="0"
+       rx="1.4399996"
+       ry="1.4399999"
+       class="solid" />
+    <rect
+       style="font-variation-settings:'wght' 700;stroke-width:0.264999;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.264999, 0.794999;paint-order:fill markers stroke"
+       id="rect2"
+       width="36.999996"
+       height="21.5"
+       x="7.9708362"
+       y="8.0291653"
+       rx="1.4399995"
+       ry="1.4399999"
+       class="solid" />
+    <circle
+       style="font-variation-settings:'wght' 700;stroke-width:0.264999;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.264999, 0.794999;paint-order:fill markers stroke"
+       id="path3"
+       cx="10.287499"
+       cy="40.972061"
+       r="2.2783391"
+       class="solid" />
+    <circle
+       style="font-variation-settings:'wght' 700;stroke-width:0.264999;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.264999, 0.794999;paint-order:fill markers stroke"
+       id="path3-2"
+       cx="17.733177"
+       cy="41.177368"
+       r="2.2783391"
+       class="solid" />
+    <circle
+       style="font-variation-settings:'wght' 700;stroke-width:0.265;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.265, 0.794999;paint-order:fill markers stroke"
+       id="path3-2-7"
+       cx="39.874725"
+       cy="43.864479"
+       class="solid"
+       r="5" />
+    <rect
+       style="font-variation-settings:'wght' 700;fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.265, 0.53;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+       id="rect4"
+       width="49.735001"
+       height="25.734766"
+       x="3.9788098"
+       y="-81.50312"
+       rx="1.4399996"
+       ry="1.4399999"
+       class="dashed "
+       transform="rotate(90)" />
+    <circle
+       style="font-variation-settings:'wght' 700;opacity:0.212197;stroke-width:0.264999;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.264999, 0.53;stroke-dashoffset:0;paint-order:fill markers stroke"
+       id="path1"
+       cx="104"
+       cy="15"
+       r="8" />
+    <circle
+       style="font-variation-settings:'wght' 700;opacity:0.212197;stroke-width:0.264999;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:0.264999, 0.53;stroke-dashoffset:0;paint-order:fill markers stroke"
+       id="path1-6"
+       cx="104.09648"
+       cy="40.99662"
+       r="8" />
+  </g>
+</svg>
