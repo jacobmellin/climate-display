@@ -27,7 +27,7 @@ const char* mqtt_server = "192.168.178.43";
 #define NUM_LEDS 6
 #define ROTARY_PIN_A 16
 #define ROTARY_PIN_B 17
-#define BUTTON_PIN 18
+#define BUTTON1_PIN 18
 #define US_SENSOR_PIN_ECHO 15
 #define US_SENSOR_PIN_TRIG 13
 
@@ -36,7 +36,7 @@ const char* mqtt_server = "192.168.178.43";
 #define OLED_RESET -1
 #define SCREEN_ADDRESS 0x3C
 
-#define BUTTON_DEBOUNCE_DELAY 20
+#define BUTTON_DEBOUNCE_DELAY 50
 
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -46,6 +46,8 @@ ClimateDisplay climateDisplay(leds, &display);
 
 NewEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, -20, 20, 0, 1);
 int16_t prevEncoderValue;
+
+static InputDebounce button1;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -201,7 +203,12 @@ void setup(void) {
   }
 
   // Setup Button
-  pinMode(BUTTON_PIN, INPUT);
+  pinMode(BUTTON1_PIN, INPUT);
+  button1.registerCallbacks(nullptr, [](uint8_t pin) {
+    Serial.println("Button 1 released");
+    climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::White);
+  });
+  button1.setup(BUTTON1_PIN, BUTTON_DEBOUNCE_DELAY, InputDebounce::PIM_INT_PULL_UP_RES);
 
   // Setup Climate Display
   climateDisplay.setRoomHumidity(Room::Kitchen, 50);
@@ -213,6 +220,10 @@ void setup(void) {
 }
 
 void loop(void) {
+  delay(1);
+  unsigned long currentMillis = millis();
+  button1.process(currentMillis);
+
   server.handleClient();
 
   if (!client.connected()) {
@@ -222,15 +233,7 @@ void loop(void) {
   client.loop();
   climateDisplay.loop();
 
-  auto buttonState = digitalRead(BUTTON_PIN);
-  if(buttonState == HIGH) {
-    climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::White);
-  } else {
-    climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::Black);
-  }
-
   int16_t currentValue;
-
   NewEncoder::EncoderState currentEncoderState;
 
   if(encoder.getState(currentEncoderState)) {
