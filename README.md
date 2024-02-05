@@ -1,6 +1,6 @@
 # 3D Printed Room Climate Display/Controller based on ESP32/Arduino
 
-You need to (https://www.youtube.com/watch?v=y79x2q360W8)[Stoßlüft] more, or else your landlord will get angry with you!
+You need to [Stoßlüft](https://www.youtube.com/watch?v=y79x2q360W8) more, or else your landlord will get angry with you!
 
 This project helps you solve that problem:
 
