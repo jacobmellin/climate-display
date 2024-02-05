@@ -261,8 +261,8 @@ void setup(void) {
     });
 
     // Ultrasonic Distance Sensor
-    timer.every(1000, [](void *arg) -> bool {
-      Serial.println(hc.dist());
+    timer.every(500, [](void *arg) -> bool {
+      climateDisplay.setUserDistance(hc.dist());
       return true;
     });
 

@@ -7,6 +7,7 @@
 #include <sstream>
 
 #define LED_FADE_DURATION_MS 1000
+#define STANDBY_TIMEOUT_MS 10000
 
 enum class Room
 {
@@ -55,6 +56,10 @@ class ClimateDisplay {
         bool isStandby = false;
         float humidityWarningThreshold = 53;
         float humiditiyCriticalThreshold = 57;
+        float userDistance = 0;
+        float userDistanceThreshold = 50;
+
+        float startWakeTime = 0;
 
         void replaceSpecialChars(const char* text) {
             for (int i = 0; i < sizeof(text); i++) {
@@ -150,6 +155,11 @@ class ClimateDisplay {
 
         void setStandby(bool standby) {
             isStandby = standby;
+            if(!isStandby) {
+                // Display has been woken up     
+               startWakeTime = millis();
+            }
+            updateLEDs();
         };
 
         void setHumidityWarningThreshold(float threshold) {
@@ -159,6 +169,13 @@ class ClimateDisplay {
         void setHumidityCriticalThreshold(float threshold) {
             humiditiyCriticalThreshold = threshold; 
         };
+
+        void setUserDistance(float distance) {
+            userDistance = distance;
+            if(userDistance < userDistanceThreshold) {
+                setStandby(false);
+            }
+        }
 
         void fadeDisplayLED(LED led, CRGB target) {
             if(!displayLEDs[led].isFading) {
@@ -240,5 +257,11 @@ class ClimateDisplay {
 
         void loop() {
             handleLEDFade();
+
+            if(!isStandby) {
+                if(millis() - startWakeTime > STANDBY_TIMEOUT_MS) {
+                    setStandby(true);
+                }
+            }
         };
 };
