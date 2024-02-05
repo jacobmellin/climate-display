@@ -31,6 +31,8 @@ const char* mqtt_server = "192.168.178.43";
 #define BUTTON1_PIN 18
 #define US_SENSOR_PIN_ECHO 15
 #define US_SENSOR_PIN_TRIG 13
+#define PIN_SCK 22
+#define PIN_SDA 19
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -213,9 +215,9 @@ void setup(void) {
 
 
   // Setup OLED
-  Wire.begin(22,19);
-  if(!display.begin(0x3C, true)) {
-    Serial.println(F("SH1106: allocation failed"));
+  Wire.begin(PIN_SCK, PIN_SDA);
+  if(!display.begin(SCREEN_ADDRESS, true)) {
+    Serial.println(F("SH1106: Allocation failed"));
     for(;;);
   }
 
