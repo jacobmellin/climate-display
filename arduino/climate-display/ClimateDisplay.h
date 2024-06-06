@@ -24,7 +24,8 @@ enum class LED
     Bedroom,
     Corridor,
     Window,
-    Humidity
+    Humidity,
+    Temperature
 };
 
 class ClimateDisplay {
@@ -54,10 +55,11 @@ class ClimateDisplay {
         CRGB* leds;
         Adafruit_SH1106G* display;
         bool isStandby = false;
-        float humidityWarningThreshold = 53;
-        float humiditiyCriticalThreshold = 57;
+        float humidityWarningThreshold = 55;
+        float humiditiyCriticalThreshold = 60;
+        float temperatureCriticalThreshold = 19;
         float userDistance = 0;
-        float userDistanceThreshold = 50;
+        float userDistanceThreshold = 40;
 
         float startWakeTime = 0;
 
@@ -92,28 +94,33 @@ class ClimateDisplay {
             this->display = display;
 
             displayLEDs[LED::Kitchen] = LEDData();
-            displayLEDs[LED::Kitchen].ledIndex = 0;
+            displayLEDs[LED::Kitchen].ledIndex = 3;
             displayLEDs[LED::Kitchen].color = CRGB::Black;
 
             displayLEDs[LED::Bathroom] = LEDData();
-            displayLEDs[LED::Bathroom].ledIndex = 1;
+            displayLEDs[LED::Bathroom].ledIndex = 4;
             displayLEDs[LED::Bathroom].color = CRGB::Black;
 
-            displayLEDs[LED::Bedroom] = LEDData();
-            displayLEDs[LED::Bedroom].ledIndex = 2;
-            displayLEDs[LED::Bedroom].color = CRGB::Black;
 
             displayLEDs[LED::Corridor] = LEDData();
-            displayLEDs[LED::Corridor].ledIndex = 3;
+            displayLEDs[LED::Corridor].ledIndex = 5;
             displayLEDs[LED::Corridor].color = CRGB::Black;
 
+            displayLEDs[LED::Bedroom] = LEDData();
+            displayLEDs[LED::Bedroom].ledIndex = 6;
+            displayLEDs[LED::Bedroom].color = CRGB::Black;
+
             displayLEDs[LED::Window] = LEDData();
-            displayLEDs[LED::Window].ledIndex = 4;
+            displayLEDs[LED::Window].ledIndex = 2;
             displayLEDs[LED::Window].color = CRGB::Black;
 
             displayLEDs[LED::Humidity] = LEDData();
-            displayLEDs[LED::Humidity].ledIndex = 5;
+            displayLEDs[LED::Humidity].ledIndex = 0;
             displayLEDs[LED::Humidity].color = CRGB::Black;
+            
+            displayLEDs[LED::Temperature] = LEDData();
+            displayLEDs[LED::Temperature].ledIndex = 0;
+            displayLEDs[LED::Temperature].color = CRGB::Black;
 
             rooms[Room::Kitchen] = RoomData();
             rooms[Room::Kitchen].room = Room::Kitchen;
@@ -173,9 +180,6 @@ class ClimateDisplay {
 
         void setUserDistance(float distance) {
             userDistance = distance;
-            if(userDistance < userDistanceThreshold) {
-                setStandby(false);
-            }
         }
 
         void fadeDisplayLED(LED led, CRGB target) {
@@ -247,11 +251,20 @@ class ClimateDisplay {
         };
 
         void updateLEDs() {
+            int numCriticalHumidity = 0;
+            int numCriticalTemperature = 0;
+
             for (auto room : rooms) {
                 if (room.second.humidity >= humiditiyCriticalThreshold) {
                     fadeDisplayLED(room.second.led, CRGB::Red);
+                    fadeDisplayLED(LED::Humidity, CRGB::Red);
+                    numCriticalHumidity++;
                 } else if (room.second.humidity >= humidityWarningThreshold) {
-                    fadeDisplayLED(room.second.led, CRGB::Yellow);
+                    if(!isStandby) {
+                        fadeDisplayLED(room.second.led, CRGB::Yellow);
+                    } else {
+                        fadeDisplayLED(room.second.led, CRGB::Black);
+                    }
                 } else {
                     if (!isStandby) {
                         fadeDisplayLED(room.second.led, CRGB::Green);
@@ -259,6 +272,18 @@ class ClimateDisplay {
                         fadeDisplayLED(room.second.led, CRGB::Black);
                     }
                 }
+
+                if(room.second.temperature <= temperatureCriticalThreshold) {
+                    fadeDisplayLED(LED::Temperature, CRGB::Red);
+                }
+            }
+
+            if(numCriticalHumidity < 1) {
+                fadeDisplayLED(LED::Humidity, CRGB::Black);
+            }
+
+            if(numCriticalTemperature < 1) {
+                fadeDisplayLED(LED::Temperature, CRGB::Black);
             }
         };
 
@@ -269,6 +294,10 @@ class ClimateDisplay {
                 if(millis() - startWakeTime > STANDBY_TIMEOUT_MS) {
                     setStandby(true);
                 }
+            }
+
+            if(userDistance < userDistanceThreshold) {
+                setStandby(false);
             }
         };
 };

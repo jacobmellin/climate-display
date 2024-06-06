@@ -25,7 +25,7 @@ const char* mqtt_server = "192.168.178.43";
 #include "ClimateDisplay.h"
 
 #define LED_PIN 2
-#define NUM_LEDS 6
+#define NUM_LEDS 7
 #define ROTARY_PIN_A 16
 #define ROTARY_PIN_B 17
 #define BUTTON1_PIN 18
@@ -49,7 +49,7 @@ WebServer server(80);
 CRGB leds[NUM_LEDS];
 ClimateDisplay climateDisplay(leds, &display);
 
-NewEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, -20, 20, 0, 1);
+NewEncoder encoder(ROTARY_PIN_A, ROTARY_PIN_B, -20, 20, 0, 0);
 int16_t prevEncoderValue;
 
 static InputDebounce button1;
@@ -224,8 +224,6 @@ void setup(void) {
   // Setup Button
   pinMode(BUTTON1_PIN, INPUT);
   button1.registerCallbacks(nullptr, [](uint8_t pin) {
-    Serial.println("Button 1 released");
-    climateDisplay.fadeDisplayLED(LED::Humidity, CRGB::White);
   });
   button1.setup(BUTTON1_PIN, BUTTON_DEBOUNCE_DELAY, InputDebounce::PIM_INT_PULL_UP_RES);
   timer.every(3, [](void *arg) -> bool {
@@ -235,7 +233,8 @@ void setup(void) {
   });
 
   // Setup Climate Display
-  climateDisplay.setRoomHumidity(Room::Kitchen, 50);
+  climateDisplay.setRoomHumidity(Room::Bedroom, 80);
+  climateDisplay.setRoomHumidity(Room::Corridor, 80);
 
   // Setup rotary encoder
   pinMode(ROTARY_PIN_A, INPUT_PULLUP);
@@ -263,15 +262,22 @@ void setup(void) {
     });
 
     // Ultrasonic Distance Sensor
-    timer.every(500, [](void *arg) -> bool {
-      climateDisplay.setUserDistance(hc.dist());
+    timer.every(250, [](void *arg) -> bool {
+      float dist = hc.dist();
+      climateDisplay.setUserDistance(dist);
+      climateDisplay.loop();
+      Serial.println(hc.dist());
       return true;
+    });
+
+    // Display loop
+    timer.every(50, [](void*arg) -> bool {
+         climateDisplay.loop();
+         return true;
     });
 
 }
 
 void loop(void) {
-  delay(1);
-  climateDisplay.loop();
   timer.tick();
 }

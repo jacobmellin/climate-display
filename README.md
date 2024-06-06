@@ -2,7 +2,8 @@
 
 Let's [Stoßlüft](https://www.youtube.com/watch?v=y79x2q360W8)!
 
-TODO: Images/Video
+
+![Climate Display: preview image of printed device](./climate-display.jpeg)
 
 The DIY Climate Display/Controller thing can do the following:
 
